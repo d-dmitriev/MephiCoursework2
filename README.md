@@ -221,22 +221,28 @@ Observable.create(emitter -> {
 ### Многопоточная обработка:
 
 ```java
-Observable.range(1, 10)
-    .subscribeOn(Schedulers.computation())
-    .filter(x -> x % 2 == 0)
-    .observeOn(Schedulers.single())
-    .subscribe(
-        x -> System.out.println(Thread.currentThread().getName() + ": " + x),
-        Throwable::printStackTrace
-    );
+try (Scheduler computation = Schedulers.computation(); Scheduler single = Schedulers.single()) {
+    Observable.range(1, 10)
+        .subscribeOn(computation)
+        .filter(x -> x % 2 == 0)
+        .observeOn(single)
+        .subscribe(
+            x -> System.out.println(Thread.currentThread().getName() + ": " + x));
+    Thread.sleep(200);
+} catch (Exception e) {
+}
 ```
 
 ### Отмена подписки:
 
 ```java
-Disposable disposable = Observable.just(1, 2, 3)
-    .subscribe(System.out::println);
-disposable.dispose();
+try (Scheduler single = Schedulers.single()) {
+    Disposable disposable = Observable.range(1,1000)
+        .observeOn(single)
+        .subscribe(System.out::println);
+    disposable.dispose();
+} catch (Exception e) {
+}
 // Подписка прервана, новые элементы не выводятся
 ```
 
